@@ -18,6 +18,7 @@ dss25, dss34 coords taken from Horizons query response to ensure closer comparis
 
 from astropy import units as u
 from astropy.coordinates import ITRS, GCRS, CartesianRepresentation, EarthLocation
+from poliastro.bodies import Earth
 
 from poliastro.util import norm
 #from poliastro.czml.extract_czml import CZMLExtractor
@@ -46,14 +47,14 @@ class Station:
         rr = vvec.dot(rvec)/r
         return r, rr
 
+    def range_rate_accel(self, rv, epoch):
+        r, rr = self.range_and_rate(rv, epoch)
+        return r, rr, -Earth.k/(r*r)
+
     def coord_range_and_rate(self, coords, epoch):
         r = coords.get_xyz(xyz_axis=1)[0]
         v = coords.differentials["s"].get_d_xyz(xyz_axis=1)[0]
         return self.range_and_rate((r, v), epoch)
-
-    def ephem_range_and_rate(self, ephem, epoch):
-        rv = ephem.rv(epoch)
-        return self.range_and_rate(rv, epoch)
 
     def add_to_czml(self, czml, color):
         loc = self._loc
