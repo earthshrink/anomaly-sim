@@ -22,6 +22,17 @@ def describe_orbit(orbit):
     print("Periapse radius:", orbit.r_p, ", altitude:", orbit.r_p-orbit.attractor.R)
 
 
+def compare_orbits(a, b):
+    assert(a.plane == b.plane)
+    print()
+    print("Δ Inclination:", (b.inc - a.inc) << u.deg)
+    print("Δ Eccentricity:", (b.ecc - a.ecc))
+    print("Δ Semilatus rectum:", (b.p - a.p) << u.km)
+    print("Δ Semimajor axix:", (b.a - a.a) << u.km)
+    print("Δ Periapse radius:", (b.r_p - a.r_p) << u.km)
+    print("Δ Energy:", (b.energy - a.energy) << (u.km*u.km)/(u.s*u.s))
+
+
 def describe_state(rv, station, epoch):
     print()
     print(":AT:", epoch)
