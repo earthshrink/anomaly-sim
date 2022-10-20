@@ -17,6 +17,7 @@ dss25, dss34 coords taken from Horizons query response to ensure closer comparis
 """
 
 from astropy import units as u
+from astropy import constants as const
 from astropy.coordinates import ITRS, GCRS, CartesianRepresentation, EarthLocation
 from poliastro.bodies import Earth
 
@@ -55,6 +56,28 @@ class Station:
         r = coords.get_xyz(xyz_axis=1)[0]
         v = coords.differentials["s"].get_d_xyz(xyz_axis=1)[0]
         return self.range_and_rate((r, v), epoch)
+
+    def rv_with_rangelag(self, rv, epoch):
+        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
+        rvec = rv[0] - loc.xyz
+        r = norm(rvec)
+
+        vvec = rv[1] - vel.xyz
+        rr = vvec.dot(rvec)/r
+
+        dt = r/const.c
+        dr = rr*dt
+        return rv[0] + dr*rvec/r, rv[1]
+
+    def rv_with_ratelag(self, rv, epoch):
+        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
+        rvec = rv[0] - loc.xyz
+        r = norm(rvec)
+
+        dt = r/const.c
+        ra = -Earth.k/(r*r)
+        drr = ra*dt
+        return rv[0], rv[1] + drr*rvec/r
 
     def add_to_czml(self, czml, color):
         loc = self._loc
