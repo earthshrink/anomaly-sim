@@ -15,24 +15,35 @@ from util import describe_orbit, describe_state, describe_trajectory
 
 class OrbitFitter:
 
-    def __init__(self, orbit, station, epoch=None):
-        """Reference orbit and tracking station on which to base the perturbation."""
+    def __init__(self, orbit, stations, var=0.01, debug=False, epoch=None):
+        """Reference orbit and tracking stations to which the perturbations must be minimized."""
+
+        self._debug = debug
 
         # compute min/max for critical parameters
         aref = orbit.a.to_value(u.m)
-        amin = 0.9 * orbit.a.to_value(u.m)
-        amax = 1.1 * orbit.a.to_value(u.m)
+        amin = aref * (1-var)
+        amax = aref * (1+var)
 
         eref = orbit.ecc.to_value(u.one)
-        emin = 0.9 * orbit.ecc.to_value(u.one)
-        emax = 1.1 * orbit.ecc.to_value(u.one)
+        emin = eref * (1-var)
+        emax = eref * (1+var)
+
+        iref = orbit.inc.to_value(u.rad)
+        imin = iref * (1-var)
+        imax = iref * (1+var)
+
+        if self._debug:
+            print("Range constraints:")
+            print("a:", amin, amax)
+            print("ecc:", emin, emax)
+            print("inc:", imin, imax)
 
         params = Parameters()
         params.add('a', min = amin, max = amax, value = aref)
         params.add('ecc', min = emin, max = emax, value = eref)
-
+        params.add('inc', min = imin, max = imax, value = iref)
         params.add('nu', min = -np.pi, max = np.pi, value = orbit.nu.to_value(u.rad))
-        params.add('inc', min = 0, max = np.pi, value = orbit.inc.to_value(u.rad))
         params.add('raan', min = 0, max = 2*np.pi, value = orbit.raan.to_value(u.rad))
         params.add('argp', min = 0, max = 2*np.pi, value = orbit.argp.to_value(u.rad))
 
@@ -40,10 +51,8 @@ class OrbitFitter:
             epoch = orbit.epoch
 
         self._params = params
-        self._station = station
+        self._stations = stations
         self._epoch = epoch
-
-        self._debug = False
 
         # computed by fitting
         self._orbit = None
@@ -65,10 +74,7 @@ class OrbitFitter:
     def ephem(self):
         return self._ephem
 
-    def set_debug(self):
-        self._debug = True
-
-    def range_residuals(self, params, offsets, data):
+    def range_residuals(self, params, times, data):
         vals = params.valuesdict()
 
         if self._debug:
@@ -83,22 +89,24 @@ class OrbitFitter:
                                      nu=vals['nu'] * u.rad,
                                      epoch = self._epoch,
                                      plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (offsets << u.s)))
+        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (times << u.s)))
 
         rres = []
-        for i, v in enumerate(offsets):
-            e = self._epoch + v * u.s
+        for ti, tv in enumerate(times):
+            e = self._epoch + tv * u.s
             rv = self._ephem.rv(e)
-            meas_r = data[i]
-            model_r, model_rr = self._station.range_and_rate(rv, e)
-            rres.append((model_r - meas_r).to_value(u.m))
+            datum = data[ti]
+            for si, sv in enumerate(self._stations):
+                meas_r = datum[si]
+                model_r, model_rr = sv.range_and_rate(rv, e)
+                rres.append((model_r - meas_r).to_value(u.m))
         return rres
 
-    def fit_range_data(self, offsets, data):
+    def fit_range_data(self, times, data):
         res_func = lambda pars, offs, dats: self.range_residuals(pars, offs, dats)
-        self._result = minimize(res_func, self._params, args=(offsets,), kws={'dats': data})
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data})
 
-    def doppler_residuals(self, params, offsets, data):
+    def doppler_residuals(self, params, times, data):
         vals = params.valuesdict()
 
         if self._debug:
@@ -113,18 +121,20 @@ class OrbitFitter:
                                      nu=vals['nu'] * u.rad,
                                      epoch = self._epoch,
                                      plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (offsets << u.s)))
+        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (times << u.s)))
 
         rres = []
-        for i, v in enumerate(offsets):
-            e = self._epoch + v * u.s
+        for ti, tv in enumerate(times):
+            e = self._epoch + tv * u.s
             rv = self._ephem.rv(e)
-            meas_rr = data[i]
-            model_r, model_rr = self._station.range_and_rate(rv, e)
-            rres.append((model_rr - meas_rr).to_value(u.m/u.s))
+            datum = data[ti]
+            for si, sv in enumerate(self._stations):
+                meas_rr = datum[si]
+                model_r, model_rr = sv.range_and_rate(rv, e)
+                rres.append((model_rr - meas_rr).to_value(u.m/u.s))
         return rres
 
-    def fit_doppler_data(self, offsets, data):
+    def fit_doppler_data(self, times, data):
         res_func = lambda pars, offs, dats: self.doppler_residuals(pars, offs, dats)
-        self._result = minimize(res_func, self._params, args=(offsets,), kws={'dats': data})
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data})
 
