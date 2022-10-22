@@ -74,7 +74,7 @@ class OrbitFitter:
     def ephem(self):
         return self._ephem
 
-    def range_residuals(self, params, times, data):
+    def range_residuals(self, params, times, data, wts=None):
         vals = params.valuesdict()
 
         if self._debug:
@@ -89,24 +89,27 @@ class OrbitFitter:
                                      nu=vals['nu'] * u.rad,
                                      epoch = self._epoch,
                                      plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (times << u.s)))
+        self._ephem = self._orbit.to_ephem(EpochsArray(times))
 
         rres = []
-        for ti, tv in enumerate(times):
-            e = self._epoch + tv * u.s
+        for i, e in enumerate(times):
             rv = self._ephem.rv(e)
-            datum = data[ti]
+            datum = data[i]
+            if wts is None or i >= len(wts):
+                wt = 1
+            else:
+                wt = wts[i]
             for si, sv in enumerate(self._stations):
                 meas_r = datum[si]
                 model_r, model_rr = sv.range_and_rate(rv, e)
-                rres.append((model_r - meas_r).to_value(u.m))
+                rres.append((model_r - meas_r).to_value(u.m)*wt)
         return rres
 
-    def fit_range_data(self, times, data):
-        res_func = lambda pars, offs, dats: self.range_residuals(pars, offs, dats)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data})
+    def fit_range_data(self, times, data, weights=None):
+        res_func = lambda pars, times, dats, wts: self.range_residuals(pars, times, dats, wts)
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights})
 
-    def doppler_residuals(self, params, times, data):
+    def doppler_residuals(self, params, times, data, wts=None):
         vals = params.valuesdict()
 
         if self._debug:
@@ -121,20 +124,23 @@ class OrbitFitter:
                                      nu=vals['nu'] * u.rad,
                                      epoch = self._epoch,
                                      plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(self._epoch + (times << u.s)))
+        self._ephem = self._orbit.to_ephem(EpochsArray(times))
 
         rres = []
-        for ti, tv in enumerate(times):
-            e = self._epoch + tv * u.s
+        for i, e in enumerate(times):
             rv = self._ephem.rv(e)
-            datum = data[ti]
+            datum = data[i]
+            if wts is None or i >= len(wts):
+                wt = 1
+            else:
+                wt = wts[i]
             for si, sv in enumerate(self._stations):
                 meas_rr = datum[si]
                 model_r, model_rr = sv.range_and_rate(rv, e)
-                rres.append((model_rr - meas_rr).to_value(u.m/u.s))
+                rres.append((model_rr - meas_rr).to_value(u.m/u.s)*wt)
         return rres
 
-    def fit_doppler_data(self, times, data):
-        res_func = lambda pars, offs, dats: self.doppler_residuals(pars, offs, dats)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data})
+    def fit_doppler_data(self, times, data, weights=None):
+        res_func = lambda pars, offs, dats, wts: self.doppler_residuals(pars, offs, dats, wts)
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights})
 
