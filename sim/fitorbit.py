@@ -11,7 +11,7 @@ from lmfit import Parameters, minimize, fit_report
 
 import numpy as np
 
-from util import describe_orbit, describe_state, describe_trajectory
+from sim.util import describe_orbit, describe_state, describe_trajectory
 
 class OrbitFitter:
 
