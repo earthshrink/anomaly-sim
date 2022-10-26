@@ -89,6 +89,8 @@ dss34 = Station("Canberra-34", 148.981964*u.deg, -35.398479*u.deg, 0.6920208*u.m
 ssrAltair = Station("Altair", 167.479328*u.deg, 9.395472*u.deg, 66*u.m)
 ssrMillstone = Station("Millstone", -71.490967*u.deg, 42.617442*u.deg, 127*u.m)
 
+esNewNorcia = Station("New Norcia", 116.191500*u.deg, -31.048225*u.deg, 252.2600*u.m)
+
 Stations = {
     "none": None,
     "a": ssrAltair,
@@ -105,5 +107,9 @@ Stations = {
     "dss34": dss34,
     "canberra": dss34,
     "Canberra": dss34,
+
+    "nn": esNewNorcia,
+    "newnorcia": esNewNorcia,
+    "NewNorcia": esNewNorcia,
 }
 
