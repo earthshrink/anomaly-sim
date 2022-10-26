@@ -90,9 +90,9 @@ __The last two notebooks represent the above results__.
 | [near_sim_postencounter_doppler.ipynb](near/near_sim_postencounter_doppler.ipynb)	|	Verifies that fit LOS and AOS Horizons states in fact reproduces the 1 mm/s = 50 mHz Doppler oscillations. |
 
 
-## Scope for further work
+## Update (2022-10-26)
 
-A fit to Rosetta's 2005 residuals given in [2] should be possible and remains to be tried.
+A fit to Rosetta's 2005 post-encounter range rate residual oscillations described in [2] (Figure 6) [emerged](rosetta/rosetta_sim_postencounter_rangerate.ipynb) with almost no effort. 
 
 ## [References](#references)
 (_in chronological order_)
