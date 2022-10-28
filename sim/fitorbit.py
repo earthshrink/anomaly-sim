@@ -4,6 +4,7 @@ from astropy import units as u
 
 from poliastro.bodies import Earth
 from poliastro.frames import Planes
+from poliastro.util import norm
 from poliastro.twobody.orbit import Orbit
 from poliastro.twobody.sampling import EpochsArray
 
@@ -15,10 +16,11 @@ from sim.util import describe_orbit, describe_state, describe_trajectory
 
 class OrbitFitter:
 
-    def __init__(self, orbit, stations, var=0.01, debug=False, epoch=None):
+    def __init__(self, orbit, stations, var=0.01, max_iter=None, trace=False, debug=False, epoch=None):
         """Reference orbit and tracking stations to which the perturbations must be minimized."""
 
         self._debug = debug
+        self._trace = trace
 
         # compute min/max for critical parameters
         aref = orbit.a.to_value(u.m)
@@ -33,11 +35,13 @@ class OrbitFitter:
         imin = iref * (1-var)
         imax = iref * (1+var)
 
-        if self._debug:
+        if debug:
             print("Range constraints:")
             print("a:", amin, amax)
             print("ecc:", emin, emax)
             print("inc:", imin, imax)
+            if max_iter:
+                print("max iter:", max_iter)
 
         params = Parameters()
         params.add('a', min = amin, max = amax, value = aref)
@@ -53,6 +57,7 @@ class OrbitFitter:
         self._params = params
         self._stations = stations
         self._epoch = epoch
+        self._maxiter = max_iter
 
         # computed by fitting
         self._orbit = None
@@ -74,11 +79,21 @@ class OrbitFitter:
     def ephem(self):
         return self._ephem
 
+
+    def iter_trace(self, iternum, params, resid):
+
+        if self._trace:
+            print('{}. {}'.format(iternum, params.valuesdict()))
+
+        elif self._debug:
+            print('{}. {:f} {}'.format(iternum, norm(resid*u.one), params.valuesdict()))
+
+        if self._maxiter:
+            return self._maxiter <= iternum
+
+
     def range_residuals(self, params, times, data, wts=None):
         vals = params.valuesdict()
-
-        if self._debug:
-            print(vals)
 
         self._orbit = Orbit.from_classical(attractor = Earth,
                                      a=vals['a'] * u.m,
@@ -107,13 +122,12 @@ class OrbitFitter:
 
     def fit_range_data(self, times, data, weights=None):
         res_func = lambda pars, times, dats, wts: self.range_residuals(pars, times, dats, wts)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights})
+        tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights, 'iter_cb': tr_func})
+
 
     def doppler_residuals(self, params, times, data, wts=None):
         vals = params.valuesdict()
-
-        if self._debug:
-            print(vals)
 
         self._orbit = Orbit.from_classical(attractor = Earth,
                                      a=vals['a'] * u.m,
@@ -142,5 +156,6 @@ class OrbitFitter:
 
     def fit_doppler_data(self, times, data, weights=None):
         res_func = lambda pars, offs, dats, wts: self.doppler_residuals(pars, offs, dats, wts)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights})
+        tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
 
