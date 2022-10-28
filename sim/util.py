@@ -9,6 +9,8 @@ from poliastro.bodies import Earth
 from poliastro.ephem import Ephem
 from poliastro.twobody.orbit import Orbit
 
+from scipy import signal
+from itertools import pairwise
 import numpy as np
 
 def describe_orbit(orbit):
@@ -75,4 +77,23 @@ def describe_trajectory(ephem, station):
     norms = norm(initial_velocity)*norm(final_velocity)
     cos = inner/norms
     print("Deflection:", np.degrees(np.arccos(cos)))
+
+
+def find_swings(epochs, values):
+    peaks = signal.find_peaks(values)
+    troughs = signal.find_peaks(-values)
+
+    swing = dict()
+    for i, v in enumerate(peaks[0]):
+        swing[v] = values[v]
+    for i, v in enumerate(troughs[0]):
+        swing[v] = values[v]
+
+    swing_epochs = []
+    swing_heights = []
+    for i, j in pairwise(sorted(swing)):
+        swing_epochs.append(epochs[j])
+        swing_heights.append(abs(swing[j]-swing[i]))
+
+    return Time(swing_epochs), swing_heights
 
