@@ -102,7 +102,7 @@ class OrbitFitter:
                                      raan=vals['raan'] * u.rad,
                                      argp=vals['argp'] * u.rad,
                                      nu=vals['nu'] * u.rad,
-                                     epoch = self._epoch,
+                                     epoch = min(self._epoch, times[0]),
                                      plane = Planes.EARTH_EQUATOR)
         self._ephem = self._orbit.to_ephem(EpochsArray(times))
 
@@ -136,7 +136,7 @@ class OrbitFitter:
                                      raan=vals['raan'] * u.rad,
                                      argp=vals['argp'] * u.rad,
                                      nu=vals['nu'] * u.rad,
-                                     epoch = self._epoch,
+                                     epoch = min(self._epoch, times[0]),
                                      plane = Planes.EARTH_EQUATOR)
         self._ephem = self._orbit.to_ephem(EpochsArray(times))
 
