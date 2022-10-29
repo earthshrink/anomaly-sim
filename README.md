@@ -94,6 +94,12 @@ __The last two notebooks represent the above results__.
 
 A fit to Rosetta's 2005 post-encounter range rate residual oscillations described in [2] (Figure 6) [emerged](rosetta/rosetta_sim_postencounter_rangerate.ipynb) with almost no effort. 
 
+## Update (2022-10-29)
+
+Improved `OrbitFitter` class, new `find_swings` utility function to extract residual oscillation trend.
+Both NEAR and Rosetta post-encounter fits extended to 30 days, to verify steadiness of oscillation.
+
+
 ## [References](#references)
 (_in chronological order_)
 
