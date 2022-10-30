@@ -1,25 +1,13 @@
 
 from testbook import testbook
 
-@testbook('../near/near_sim_postencounter_doppler.ipynb', execute=True, timeout=300)
+@testbook('../near/near_sim_postencounter_doppler.ipynb', execute=True, timeout=600)
 def test_near_sim_postencounter_doppler(tb):
 	tb.execute()
 
 @testbook('../near/near_gapcheck.ipynb', execute=True)
 def test_gapcheck(tb):
     tb.execute()
-
-@testbook('../near/near_gapfit.ipynb', execute=True)
-def test_near_gapfit(tb):
-	tb.execute()
-
-@testbook('../near/near_sim_doppler_residuals.ipynb', execute=True)
-def test_near_sim_doppler_residuals(tb):
-	tb.execute()
-
-@testbook('../near/near_sim_range_residuals.ipynb', execute=True)
-def test_near_sim_range_residuals(tb):
-	tb.execute()
 
 @testbook('../near/near_sim_ssn_fitlosdoppler_trajectory.ipynb', execute=True)
 def test_near_sim_ssn_fitlosdoppler_trajectory(tb):

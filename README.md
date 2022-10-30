@@ -1,9 +1,11 @@
-# Reproduction of the Earth flyby anomalies by orbit simulation
+# Reproduction of Earth flyby anomalies by orbit simulation
 
 This repository presents code and Jupyter notebooks that successfully reproduce the Earth flyby anomalies 
 described in NEAR's 1998 flyby in [1, 3],
 using the [astropy](https://www.astropy.org) and [poliastro](https://www.poliastro.space) python libraries
-for orbit propagation.
+for orbit propagation,
+and [lmfit](https://github.com/lmfit/lmfit-py)
+for the trajectory least square fits.
 
 
 ## Background and significance
@@ -72,33 +74,45 @@ and are shown using Jupyter notebooks:
 
 The notebooks present the investigation as follows.
 __The last two notebooks represent the above results__.
-
-
-| __Notebook__	| __Result obtained__ |
-| :-- | :-- |
-| [near_gapcheck.ipynb](near/near_gapcheck.ipynb)	|	Establishes that orbit propagation is too inaccurate to test JPL or ESA OD. Horizons can be used only for conditions at one epoch to generate reference orbital elements. |
-| [near_sim_ssn_residuals.ipynb](near/near_sim_ssn_residuals.ipynb)	|	Verifies that lags on the LOS-based trajectory fit the SSN residuals accurately. __But__ the lags diverge at LOS. |
-| [near_ssntrack.ipynb](near/near_ssntrack.ipynb)	|	3d visualization of SSN locations and trajectory, which suggested a dynamically-valid adjacent trajectory might fit the anomalies. |
-| [near_sim_range_residuals.ipynb](near/near_sim_range_residuals.ipynb)	|	Test of least square fit of orbital elements on range data. |
-| [near_sim_doppler_residuals.ipynb](near/near_sim_doppler_residuals.ipynb)	|	Test of least square fit of orbital elements on Doppler data. |
-| [near_sim_ssn_fitlosrange_trajectory.ipynb](near/near_sim_ssn_fitlosrange_trajectory.ipynb)	|	Showed that least square fit of orbital elements to the LOS-based range data leads to slight change in SSN residuals. |
-| [near_sim_ssn_fitlosdoppler_trajectory.ipynb](near/near_sim_ssn_fitlosdoppler_trajectory.ipynb)	|	Showed that least square fit of orbital elements to the LOS-based Doppler data leads to substantial change in SSN residuals. |
-| [near_sim_ssn_revfit_altair.ipynb](near/near_sim_ssn_revfit_altair.ipynb)	|	Fit to range data with lags computed from the Horizons LOS state for Altair. Residuals diverge up to 5 km and 0.5 m/s. |
-| [near_sim_ssn_revfit_millstone.ipynb](near/near_sim_ssn_revfit_millstone.ipynb)	|	Fit to range data with lags computed from the Horizons LOS state for Millstone. Residuals diverge up to 5 km and 0.5 m/s. |
-| [near_sim_ssn_revfit_range.ipynb](near/near_sim_ssn_revfit_range.ipynb)	|	Fit to range data with lags computed using Horizons LOS for the SSNs and Goldstone together. Range divergence down to 150 m, and no longer linear. Doppler varies to 0.6 m/s. |
-| [near_sim_ssn_revfit_doppler.ipynb](near/near_sim_ssn_revfit_doppler.ipynb)	|	Fit to Doppler data with lags computed from Horizons LOS for the SSNs and Goldstone together. Range variation 200 m almost linear. Doppler variation is down to 50 mm/s. This exceeds the anomaly but to be expected given the simplistic orbit propagation used. |
-| [near_sim_postencounter_doppler.ipynb](near/near_sim_postencounter_doppler.ipynb)	|	Verifies that fit LOS and AOS Horizons states in fact reproduces the 1 mm/s = 50 mHz Doppler oscillations. |
+| __Notebook__                                       | __Result obtained__                                                                       |
+|:--|:--|
+| [near_gapcheck.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_gapcheck.ipynb)                           | Establishes that orbit propagation is too inaccurate to test JPL or ESA OD. Horizons can be used only for initial position and velocity for a reference trajectory, and the tests must be limited to reproducing the published residuals. |
+|                                                    |                                                                                           |
+| [near_sim_ssn_residuals.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_residuals.ipynb)                  | Shows that lags _added to_ the LOS-based trajectory accurately predict the SSN residuals. _But_ inserting a lag at LOS does not, making it a mystery how the SSN residuals could be proportional to range against a trajectory extrapolated from LOS without reference to the SSN radars. |
+|                                                    |                                                                                           |
+| [near_ssntrack.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_ssntrack.ipynb)                           | Cesium 3d visualization of the SSN locations and trajectory. This suggested that the SSN residuals could result from a small vertical displacement of the trajectory assuring proportionality to range as a 'similar triangles' property. |
+|                                                    |                                                                                           |
+| [near_sim_ssn_fitlosrange_trajectory.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_fitlosrange_trajectory.ipynb)     | Validated least square fit from simulated range data with lags in the LOS-based reference trajectory as a means to find a similar trajectory. Very similar values are obtained for the SSN residuals. |
+|                                                    |                                                                                           |
+| [near_sim_ssn_fitlosdoppler_trajectory.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_fitlosdoppler_trajectory.ipynb)   | Validated least square fit from simulated Doppler data with lags also as a means to find a similar trajectory. The values predicted for the SSN residuals are much different, however. |
+|                                                    |                                                                                           |
+| [near_sim_ssn_revfit_altair.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_revfit_altair.ipynb)              | Fit to simulated range data lags for Altair. Residuals diverge up to 5 km and 0.5 m/s.    |
+|                                                    |                                                                                           |
+| [near_sim_ssn_revfit_millstone.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_revfit_millstone.ipynb)           | Fit to simulated range data lags for Millstone. Residuals diverge up to 5 km and 0.5 m/s.  |
+|                                                    |                                                                                           |
+| [near_sim_ssn_revfit_range.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_revfit_range.ipynb)               | Fit to combined range data with lags simulated for the SSNs and Goldstone. The divergence is down to 150 m, finally assuring that (lag induced) error in pre-LOS trajectory sufficed to cause the SSN residuals. |
+|                                                    |                                                                                           |
+| [near_sim_ssn_revfit_doppler.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_revfit_doppler.ipynb)             | Fit to combined Doppler data with lags simulated for the SSNs and Goldstone. The range variation is still only 200 m and almost linear. The Doppler variation is down to 50 mm/s. This exceeds the anomaly, but this is without modelling precession, solar wind, etc. |
+|                                                    |                                                                                           |
+| [near_sim_postencounter_doppler.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_postencounter_doppler.ipynb)          | Verifies that fit to simulated Doppler with lags from the LOS-based trajectory reproduces NEAR's post-encounter Doppler residual oscillation. |
+|                                                    |                                                                                           |
+| [rosetta_sim_postencounter_rangerate.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/rosetta/rosetta_sim_postencounter_rangerate.ipynb)  | Verifies that fit to simulated range rate with lags from the LOS-based trajectory reproduces Rosetta's post-encounter range rate residual oscillation. |
+|                                                    |                                                                                           |
+| [rosetta_sim_approach_rangerate.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/rosetta/rosetta_sim_approach_rangerate.ipynb)       | Verifies that fit in reverse to simulated range rate with lags from a post-perigee state reproduces the range rate oscillations before and after perigee. |
 
 
 ## Update (2022-10-26)
 
 A fit to Rosetta's 2005 post-encounter range rate residual oscillations described in [2] (Figure 6) [emerged](rosetta/rosetta_sim_postencounter_rangerate.ipynb) with almost no effort. 
 
-## Update (2022-10-29)
+## Update (2022-10-30)
 
 Improved `OrbitFitter` class, new `find_swings` utility function to extract residual oscillation trend.
 Both NEAR and Rosetta post-encounter fits extended to 30 days, to verify steadiness of oscillation.
 
+Additionally, the Jupyter notebook links in the table above have been updated to allow viewing them in the [Notebook
+viewer](https://nbviewer.org).
+This addresses issues noticed in browsing some of the notebooks on Github, and brings the Cesium 3d views alive.
 
 ## [References](#references)
 (_in chronological order_)
