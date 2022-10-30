@@ -123,7 +123,7 @@ class OrbitFitter:
     def fit_range_data(self, times, data, weights=None):
         res_func = lambda pars, times, dats, wts: self.range_residuals(pars, times, dats, wts)
         tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights, 'iter_cb': tr_func})
+        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
 
 
     def doppler_residuals(self, params, times, data, wts=None):
