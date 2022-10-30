@@ -1,0 +1,6 @@
+#!/bin/bash
+
+sed -n \
+	-e 's/\[\([a-z_\.]*\)\]([a-z_\.\/]*)/\1/' \
+	-e 's/|/	/gp' \
+README.md > files.tab

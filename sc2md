@@ -1,0 +1,21 @@
+#!/bin/bash
+
+File=README.md
+URL="https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/"
+
+sccat -M files.sc | sed \
+	-e '1s/.*/\n&/' \
+	-e '2s/.*/|:--|:--|/' \
+	-e 's/near\///' \
+	-e 's/rosetta\///' \
+	-e 's/\(near_[^ ]*\.ipynb\)/[&](_URL_near\/&)/' \
+	-e 's/\(rosetta_[^ ]*\.ipynb\)/[&](_URL_rosetta\/&)/' \
+	-e "s!_URL_!$URL!" \
+	> files.md
+
+sed -i -e '/^|/d' $File
+
+ex $File <<EOF
+/The last two notebooks/r files.md
+x
+EOF
