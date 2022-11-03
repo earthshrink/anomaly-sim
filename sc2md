@@ -1,10 +1,9 @@
-#!/bin/bash
+#!/bin/bash -x
 
 File=README.md
 URL="https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/"
 
 sccat -M files.sc | sed \
-	-e '1s/.*/\n&/' \
 	-e '2s/.*/|:--|:--|/' \
 	-e 's/near\///' \
 	-e 's/rosetta\///' \
@@ -13,9 +12,8 @@ sccat -M files.sc | sed \
 	-e "s!_URL_!$URL!" \
 	> files.md
 
-sed -i -e '/^|/d' $File
+sed -i \
+	-e '/^|/d' \
+	-e '/{{{ table/r files.md' \
+	$File
 
-ex $File <<EOF
-/The last two notebooks/r files.md
-x
-EOF
