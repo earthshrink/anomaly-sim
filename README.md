@@ -1,80 +1,125 @@
-# Reproduction of Earth flyby anomalies by orbit simulation
+# Reproduction of the flyby anomaly residuals
 
-This repository presents code and Jupyter notebooks that successfully reproduce the Earth flyby anomalies 
-described in NEAR's 1998 flyby in [1, 3],
-using the [astropy](https://www.astropy.org) and [poliastro](https://www.poliastro.space) python libraries
+<!-- {{{ -->
+
+This repository presents code and Jupyter notebooks that reproduce for the first time a key signature,
+_oscillating Doppler residuals_,
+seen alongside anomalous velocity gains ΔV  in NEAR's 1998 flyby of Earth [[1](Ref.md#1), [3](Ref.md#3)],
+and in Rosetta's in 2005 [[2](Ref.md#2)].
+The code uses the [astropy](https://www.astropy.org) and [poliastro](https://www.poliastro.space) python libraries
 for orbit propagation,
 and [lmfit](https://github.com/lmfit/lmfit-py)
-for the trajectory least square fits.
-
-
-## Background and significance
-
-The fact that the same anomalies were being obtained
-regardless of whether the trajectory was inferred from the range data or from the Doppler data in the coherent two-way tracking
-not only of Galileo and NEAR but also of Rosetta in its 2005 flyby [2],
-had prompted a hypothesis of anomalous velocity (and energy) gain _ΔV_.
-There have been numerous speculations as to its cause, including notably
-dark matter surrounding satellite orbits
-[4]
-and
-gravito-magnetic frame dragging
-[9].
-
-However,
-_dynamical_ causes are inherently untenable as
-_all_ of the anomalies occurred at altitudes far below the hundreds of GNSS and geostationary satellites.
-NEAR's closest approach of 538 km is about the altitude of the Hubble Space Telescope,
-and the gap in its tracking, across which the anomaly was detected,
-began at an altitude below 32,000 km.
-Any unanticipated dynamical effect manifesting in the single pass of a flyby
-should have been replicated in every orbit of every satellite at and above the range of
-the gaps in the flyby tracking across which the anomalies had been detected,
-as pointed out in [10].
+for discovering least square fit trajectories that reproduce the pattern of residuals.
 
 More particularly,
-rather large and remarkably linear discrepancies against the US Space Surveillance Network (SSN) radars
-had been noted for NEAR in [1].
-They were subsequently confirmed also for Galileo
-but had been overlooked in JPL's own investigation ([8]).
-They were shown in [5]
-to almost exactly correspond to __light-time lags__ in the Doppler tracking data
-and to also explain the ΔV to within 20%.
-A subsequent independent check using JPL Horizons that had just become available
-[6]
-ended up finding the same correlation and into a pre-relativity aether-theoretic hypothesis
-[7].
-That the correlation in fact holds to within the individual radar accuracies,
-explains NEAR's _and Rosetta_'s anomalies to 1% and 3%, respectively,
-and accounts for numerous detailed features of the residuals given in
-[1, 2, 3]
-has been rigorously shown directly from JPL Horizons range and range rate data
-[8].
+__light-time lags__ had been anticipated in the two-way Doppler and range data
+from [a deeper mathematical theory revisiting the wave equation](Theory.md),
+shown implied by the SSN radar range residuals in [[5](Ref.md#5)],
+and subsequently in [[6](Ref.md#6)],
+to closely explain _all aspects_ of the anomalies, including the anomalous velocity gains ΔV to 1%,
+using range and range rate data directly from [JPL Horizons](https://ssd.jpl.nasa.gov).
+Copies of the residual graphs from JPL, the Horizons queries and the graph computation and overlay scripts
+are given and documented in [Github: flyby-analysis](https://github.com/earthshrink/flyby-analysis).
+See also the [brief summary](Summary.md) on the anomaly and prior work. 
 
-Shown in [11] is that the light-time lags are in fact
-mathematically dictated for coherent reception under acceleration,
-which has eluded rigorous treatment in Doppler and relativity theories.
-This makes it imperative to rigorously verify that
-the anomalies were not somehow coincidental, and more so, that
-the SSN residuals most directly indicative of the light-time lags do not imply
-a peculiar, one-time (or two-time, considering Galileo) error by the SSN radars.
+As briefly explained [separately](Theory.md), the light-time lags expose
+a fundamental issue of Doppler under acceleration that was hitherto untreated and renders
+the very formalism of relativistic space-time fundamentally incomplete for coherent observations,
+and imply that
+_modulated range codes were delivered at __speeds exceeding that of light for days___.
+These aspects,
+if not the promise of rendering current communication and radar technologies obsolete,
+make it imperative to verify that
+the light-time lags are real and the only explanation possible for the anomalies,
+independently now recognized as __already over 100σ__ [[4](Ref.md#4)].
+
+<!-- }}} -->
+
+## Method and scope
+
+[Poliastro](https://www.poliastro.space) defines
+an `Orbit` class that encapsulates orbital elements and a method for constructing `Orbit` objects
+with reference to a "single attractor"
+from position and velocity vector coordinates at a given instant in an inertial frame.
+It also defines
+an `Ephem` class that encapsulates an ordered sequence of coordinates and corresponding epochs,
+and methods to interpolate the coordinates to epochs in-between,
+and can thus represent a segment of trajectory.
+A `from_horizons` constructor allows obtaining a trajectory from [JPL Horizons](https://ssd.jpl.nasa.gov).
+Version 0.17 added a `to_ephem` method to the Orbit class to compute
+the trajectory at arbitrary epochs using any of several proven orbit computation algorithms.
+
+Added here are
+- a `Station` class to encapsulate tracking station coordinates and methods to compute topocentric (station-relative)
+  range, range rate and radial acceleration given the spacecraft position and velocity vectors at a given epoch; and
+- an `OrbitFitter` class that encapsulates [lmfit](https://github.com/lmfit/lmfit-py) with methods to compute a best fit
+  trajectory (`Ephem`) in the neighbourhood of an initial `Orbit` over the orbital elements parameter space, given
+  simulated range or range rate (Doppler) data.
+
+Precession and nutation of the attractor (Earth), 
+gravitational influences of other bodies including the Sun,
+space-time curvature and cumulative effects of the solar wind, etc.
+are not modelled.
+An effort to model these would be not only prohibitive in time and effort,
+but would at most serve to merely confirm
+the 1% fit to NEAR's ΔV and zero-noise fit to the SSN residuals
+already obtained with [JPL Horizons](https://ssd.jpl.nasa.gov) data
+in [[6](Ref.md#6)].
+Specialist expertise would be required that would also defeat
+transparency and verifiability of any further improvement or additional result.
+
+This work was therefore meant to explore
+- if NASA and ESA orbit determinations (OD) for the flybys could be reproduced more simply without specialist skills;
+- whether the Doppler/range rate residual oscillations also seen could be reproduced and experimented with;
+- and if so, _whether these residual oscillations also imply the light-time lags or allow other explanations_.
+
+In all cases,
+an initial set of position and velocity vectors is obtained using `Ephem.from_horizons`
+from the actual flyby and the official NASA/ESA trajectory,
+and used to compute a reference set of orbital elements.
+Range or range rate data are simulated over a trajectory derived from these reference orbital elements
+for a sample set of pre- or post-encounter epochs.
+Least square fit is applied to this simulated data to obtain new orbital elements and trajectory,
+and the final set of residuals computed during the fit are compared to
+those described in [[1](Ref.md#1), [2](Ref.md#2)].
 
 
+## Results
 
-## Investigation and results
+The main result obtained is that
+__the light-time lags are the necessary and sufficient explanation for the Doppler/range-rate residuals__ and thereby
+for the anomalies as a whole,
+as follows:
 
-Accordingly, two results were sought beyond the close fit to ΔV in [8], 
-and are shown using Jupyter notebooks:
+- The post-encounter residuals are found very closely reproduced by the least square fit to range rate data simulated
+  with the light-time lags against the Horizons-based reference trajectory for both NEAR, in
+  [near_sim_postencounter_doppler.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_postencounter_doppler.ipynb)
+  and for Rosetta in
+  [rosetta_sim_postencounter_rangerate.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/rosetta/rosetta_sim_postencounter_rangerate.ipynb).
 
-- The SSN residuals can be explained by an actual trajectory and tracking signal lags to within the accuracy of orbit
-  propagation, so there is indeed no basis to attribute them to radar error.
+  This establishes sufficiency of the light-time lags in the tracking signal.
+  <p>
 
-- The main signature, a large diurnal oscillation in the post-encounter Doppler residual sustained for days, is almost
-  exactly reproduced, which had not been possible from Horizons data alone in [8].
+- Replacing the light-time lags with a constant lag is found to also produce oscillation, but with a slope proportional
+  to the constant, in
+  [near_sim_postencounter_constlag.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_postencounter_constlag.ipynb).
+  Keeping the lags proportional to light-time but changed by a constant scale factor results in the oscillations also
+  changing by the same scale factor, as found in
+  [near_sim_postencounter_scaledlag.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_postencounter_scaledlag.ipynb).
 
-The notebooks present the investigation as follows.
-__The last two notebooks represent the above results__.
-| __Notebook__                                       | __Result obtained__                                                                       |
+  This proves necessity of exactly light-time lags as the only possible change in the transponded tracking signal that could
+  lead to the precise form and magnitude of the residuals.
+  It also proves necessity of signal change in the first place, as the oscillations trivially vanish with zero scale
+  factor.
+
+In particular, any hypothesis of an external force responsible for the ΔV, including dark matter or relativistic
+frame-dragging [[8](Ref.md#8)] or from the Casimir effect [[4](Ref.md#4)], would be incapable of reproducing the
+residual oscillations, whereas the light-time lags also explain the ΔV to 1% as mentioned.
+
+Following notebooks were developed _en route_  to this conclusion and provide additional details and insight.
+
+<!-- {{{ table -->
+| __Notebook__                                       | __Result shown__                                                                          |
 |:--|:--|
 | [near_gapcheck.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_gapcheck.ipynb)                           | Establishes that orbit propagation is too inaccurate to test JPL or ESA OD. Horizons can be used only for initial position and velocity for a reference trajectory, and the tests must be limited to reproducing the published residuals. |
 |                                                    |                                                                                           |
@@ -94,91 +139,6 @@ __The last two notebooks represent the above results__.
 |                                                    |                                                                                           |
 | [near_sim_ssn_revfit_doppler.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_ssn_revfit_doppler.ipynb)             | Fit to combined Doppler data with lags simulated for the SSNs and Goldstone. The range variation is still only 200 m and almost linear. The Doppler variation is down to 50 mm/s. This exceeds the anomaly, but this is without modelling precession, solar wind, etc. |
 |                                                    |                                                                                           |
-| [near_sim_postencounter_doppler.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/near/near_sim_postencounter_doppler.ipynb)          | Verifies that fit to simulated Doppler with lags from the LOS-based trajectory reproduces NEAR's post-encounter Doppler residual oscillation. |
-|                                                    |                                                                                           |
-| [rosetta_sim_postencounter_rangerate.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/rosetta/rosetta_sim_postencounter_rangerate.ipynb)  | Verifies that fit to simulated range rate with lags from the LOS-based trajectory reproduces Rosetta's post-encounter range rate residual oscillation. |
-|                                                    |                                                                                           |
 | [rosetta_sim_approach_rangerate.ipynb](https://nbviewer.org/github/earthshrink/anomaly-sim/blob/master/rosetta/rosetta_sim_approach_rangerate.ipynb)       | Verifies that fit in reverse to simulated range rate with lags from a post-perigee state reproduces the range rate oscillations before and after perigee. |
-
-
-## Update (2022-10-26)
-
-A fit to Rosetta's 2005 post-encounter range rate residual oscillations described in [2] (Figure 6) [emerged](rosetta/rosetta_sim_postencounter_rangerate.ipynb) with almost no effort. 
-
-## Update (2022-10-30)
-
-Improved `OrbitFitter` class, new `find_swings` utility function to extract residual oscillation trend.
-Both NEAR and Rosetta post-encounter fits extended to 30 days, to verify steadiness of oscillation.
-
-Additionally, the Jupyter notebook links in the table above have been updated to allow viewing them in the [Notebook
-viewer](https://nbviewer.org).
-This addresses issues noticed in browsing some of the notebooks on Github, and brings the Cesium 3d views alive.
-
-## [References](#references)
-(_in chronological order_)
-
-[1] P G Antreasian and J R Guinn,
-_Investigations into the unexpected Delta-V increases during the earth gravity assists of Galileo and NEAR_,
-AIAA, 98-4287 (1998) 
-
-[2]
-T Morley and F Budnik, _Rosetta Navigation at its First Earth-Swingby_, 19th Intl Symp Space Flight Dynamics, ISTS 2006-d-52 (2006)
-
-[3] J D Anderson, J K Campbell, J E Ekelund, J Ellis and J F Jordan,
-_Anomalous Orbital-Energy Changes Observed during Spacecraft Flybys of Earth_,
-PRL, 100, 9, 091102 (2008);
-J D Anderson and M M Nieto,
-_Astrometric Solar-System Anomalies_,
-Proc IAU Symp No. 261 (2009)
-[arXiv:0907.2469v2](https://arXiv.org/abs/0907.2469)
-
-[4]
-S L Adler,
-_Can the flyby anomaly be attributed to Earth-bound dark matter?_,
-Phys Rev D, 79, 2, 023505, 10,
-[arXiv:0805.2895](https://arxiv.org/abs/0805.2895) (2009)
-
-[5] V Guruprasad,
-_Observational evidence for travelling wave modes bearing distance proportional shifts_,
-[arXiv:1507.08222](https://arXiv.org/abs/1507.08222),
-EPL, 110, 5,
-[54001](http://stacks.iop.org/0295-5075/110/i=5/a=54001)
-(2015) 
-
-[6]
-J D Giorgini,
-_Status of the JPL Horizons Ephemeris System_,
-IAU General Assembly (2015)
-
-[7]
-L Bilbao,
-_Does the velocity of light depend on the source movement?_,
-Prog in Phys (12) 307-312
-[arXiv:1606.03921](https://arXiv.org/abs/1606.03921)
-(2016)
-
-[8] V Guruprasad,
-_Conclusive analysis and cause of the flyby anomaly_,
-Presented at [IEEE NAECON
-2019](https://attend.ieee.org/naecon-2019/wp-content/uploads/sites/29/2019/08/Guruprasad-483-Radar-2.pdf).
-([Proceedings preprint](https://doi.org/10.36227/techrxiv.10252871)).
-For the Horizons query and graphs generating code,
-see [github:earthshrink/flyby-analysis](https://github.com/earthshrink/flyby-analysis).
-
-[9]
-B M Mirza,
-_The Flyby Anomaly and the Gravitational-Magnetic Field Induced Frame-Dragging Effect around the Earth_,
-MNRAS, 489, 3, 3232-3235, [arXiv:1909.08083](https://arXiv.org/abs/1909.08083) (2019) 
-
-[10]
-V Guruprasad, _Comment on "The Flyby Anomaly and the Gravitational-Magnetic Field Induced Frame-Dragging Effect around
-the Earth"_,
-[arXiv:1911.05453](https://arxiv.org/abs/1911.05453) (2019)
-
-[11]
-V Guruprasad,
-_Parametric separation of variables and the complete propagation law_,
-[progress report](https://doi.org/10.36227/techrxiv.196204771) (2022)
-
----
+<!-- }}} -->
 
