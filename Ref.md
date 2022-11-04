@@ -67,7 +67,7 @@ _Comment on "The Flyby Anomaly and the Gravitational-Magnetic Field Induced Fram
 <a id=10></a>
 [10] V Guruprasad,
 _Parametric separation of variables and the complete propagation law_,
-[interim progress report](https://doi.org/10.36227/techrxiv.196204771) (2022)
+[interim progress report](https://doi.org/10.36227/techrxiv.19620477) (2022)
 
 ---
 
