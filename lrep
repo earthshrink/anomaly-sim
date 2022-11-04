@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+"""A tool to compare Jupyter notebook comments"""
+
+import json
+import sys
+
+class Scroll:
+    """Holder of text comments"""
+
+    def __init__(self):
+        self._chunks = {}
+
+    def add_chunk(self, file, chunk):
+        if chunk not in self._chunks:
+            self._chunks[chunk] = [file]
+        else:
+            self._chunks[chunk].append(file)
+
+    def parse(self, file):
+        try:
+            with open(file) as f:
+                j = json.load(f)
+
+        except IsADirectoryError as e:
+            return
+
+        except ValueError as e:
+            return
+
+        for c in j['cells']:
+            if c['cell_type'] == 'markdown':
+                self.add_chunk(file, '|'.join(c['source']))
+
+    def report_dups(self):
+        for chunk in self._chunks.keys():
+            files = self._chunks[chunk]
+            if len(files) > 1:
+                print(chunk)
+                for f in files:
+                    print(f"\t{f}")
+
+def main(files):
+    scroll = Scroll()
+    for f in files:
+        scroll.parse(f)
+    scroll.report_dups()
+    pass
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
+# end
