@@ -5,6 +5,14 @@ from testbook import testbook
 def test_near_sim_postencounter_doppler(tb):
 	tb.execute()
 
+@testbook('../near/near_sim_postencounter_constlag.ipynb', execute=True, timeout=600)
+def test_near_sim_postencounter_doppler(tb):
+	tb.execute()
+
+@testbook('../near/near_sim_postencounter_scaledlag.ipynb', execute=True, timeout=600)
+def test_near_sim_postencounter_doppler(tb):
+	tb.execute()
+
 @testbook('../near/near_gapcheck.ipynb', execute=True)
 def test_gapcheck(tb):
     tb.execute()
