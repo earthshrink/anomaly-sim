@@ -81,7 +81,7 @@ def describe_trajectory(ephem, station):
 
 def find_swings(epochs, values):
     peaks = signal.find_peaks(values)
-    troughs = signal.find_peaks(-values)
+    troughs = signal.find_peaks(np.multiply(-1, values))
 
     swing = dict()
     for i, v in enumerate(peaks[0]):
