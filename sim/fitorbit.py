@@ -54,7 +54,7 @@ class OrbitFitter:
         if epoch is None:
             epoch = orbit.epoch
 
-        self._params = params
+        self._ref_params = params
         self._stations = stations
         self._epoch = epoch
         self._maxiter = max_iter
@@ -63,6 +63,8 @@ class OrbitFitter:
         self._orbit = None
         self._ephem = None
         self._result = None
+        self._params = []
+        self._resid = []
 
     @property
     def result(self):
@@ -83,9 +85,10 @@ class OrbitFitter:
     def iter_trace(self, iternum, params, resid):
 
         if self._trace:
-            print('{}. {}'.format(iternum, params.valuesdict()))
+            self._params.append(params)
+            self._resid.append(resid)
 
-        elif self._debug:
+        if self._debug:
             print('{}. {:f} {}'.format(iternum, norm(resid*u.one), params.valuesdict()))
 
         if self._maxiter:
@@ -123,7 +126,7 @@ class OrbitFitter:
     def fit_range_data(self, times, data, weights=None):
         res_func = lambda pars, times, dats, wts: self.range_residuals(pars, times, dats, wts)
         tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
+        self._result = minimize(res_func, self._ref_params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
 
 
     def doppler_residuals(self, params, times, data, wts=None):
@@ -157,5 +160,5 @@ class OrbitFitter:
     def fit_doppler_data(self, times, data, weights=None):
         res_func = lambda pars, offs, dats, wts: self.doppler_residuals(pars, offs, dats, wts)
         tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
-        self._result = minimize(res_func, self._params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
+        self._result = minimize(res_func, self._ref_params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
 
