@@ -163,5 +163,5 @@ class OrbitFitter:
             wasr = rdata[i-1]
             rrdata.append([ (nowr[si] - wasr[si])/dt for si, sv in enumerate(self._stations) ])
 
-        self.fit_doppler_data(times[1:], rrdata, weights)
+        self.fit_doppler_data(times[:-1], rrdata, weights)
 
