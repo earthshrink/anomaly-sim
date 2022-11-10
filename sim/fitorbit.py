@@ -153,3 +153,15 @@ class OrbitFitter:
         tr_func = lambda pars, iternum, resid, *args, **kws: self.iter_trace(iternum, pars, resid)
         self._result = minimize(res_func, self._ref_params, args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func)
 
+
+    def fit_rangerates_to_range_data(self, times, rdata, weights=None):
+
+        rrdata = []
+        for i, t in enumerate(times[1:]):
+            dt = t - times[i-1]
+            nowr = rdata[i]
+            wasr = rdata[i-1]
+            rrdata.append([ (nowr[si] - wasr[si])/dt for si, sv in enumerate(self._stations) ])
+
+        self.fit_doppler_data(times[1:], rrdata, weights)
+
