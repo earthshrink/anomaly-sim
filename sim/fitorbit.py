@@ -95,7 +95,7 @@ class OrbitFitter:
             return self._maxiter <= iternum
 
 
-    def range_residuals(self, params, times, data, wts=None):
+    def compute_trajectory(self, params, times):
         vals = params.valuesdict()
 
         self._orbit = Orbit.from_classical(attractor = Earth,
@@ -109,6 +109,9 @@ class OrbitFitter:
                                      plane = Planes.EARTH_EQUATOR)
         self._ephem = self._orbit.to_ephem(EpochsArray(times))
 
+
+    def range_residuals(self, params, times, data, wts=None):
+        self.compute_trajectory(params, times)
         rres = []
         for i, e in enumerate(times):
             rv = self._ephem.rv(e)
@@ -130,19 +133,7 @@ class OrbitFitter:
 
 
     def doppler_residuals(self, params, times, data, wts=None):
-        vals = params.valuesdict()
-
-        self._orbit = Orbit.from_classical(attractor = Earth,
-                                     a=vals['a'] * u.m,
-                                     ecc=vals['ecc'] * u.one,
-                                     inc=vals['inc'] * u.rad,
-                                     raan=vals['raan'] * u.rad,
-                                     argp=vals['argp'] * u.rad,
-                                     nu=vals['nu'] * u.rad,
-                                     epoch = min(self._epoch, times[0]),
-                                     plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(times))
-
+        self.compute_trajectory(params, times)
         rres = []
         for i, e in enumerate(times):
             rv = self._ephem.rv(e)
