@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+"""A tool to compare least square fit results across Jupyter notebooks"""
+
+import numpy as np
+
+import json
+import sys
+import re
+
+class Lsq:
+    """Purveyor of text comments"""
+
+    def __init__(self):
+        self._iter_re = re.compile('(\-?\d+)\. (\-?\d+\.\d+) (\{[^}]+\})')
+        self._current_file = None
+        self._norms = {}
+        self._params = {}
+        self._pkeys = ['a', 'ecc', 'inc', 'nu', 'raan', 'argp']
+
+        self._unity = lambda x: x
+        self._rad2deg = lambda x: np.rad2deg(x)
+        self._pconv = [ self._unity, self._unity, self._rad2deg, self._rad2deg, self._rad2deg, self._rad2deg ]
+
+
+    def report(self):
+        print('{}\t'.format('notebook'),
+            '\t'.join(['{}\tΔ{}'.format(k, k) for i, k in enumerate(self._pkeys)]))
+        for f in self._norms.keys():
+            p = self._params[f]
+            print('{}\t'.format(f),
+                '\t'.join(['{}\t{}'.format(self._pconv[i](p[0][k]), self._pconv[i](p[-1][k] - p[0][k]))
+                    for i, k in enumerate(self._pkeys)]))
+
+
+    def store(self, niter, rnorm, params):
+        if int(niter) < 0:
+            return
+        if self._current_file not in self._norms:
+            self._norms[self._current_file] = []
+        if self._current_file not in self._params:
+            self._params[self._current_file] = []
+        self._norms[self._current_file].append(rnorm)
+        self._params[self._current_file].append(params)
+
+    def parselsq(self, lines):
+        for l in lines:
+            m = self._iter_re.match(l)
+            if m:
+                self.store(m.group(1), m.group(2), eval(m.group(3)))
+
+    def parse(self, file):
+        try:
+            with open(file) as f:
+                j = json.load(f)
+
+        except IsADirectoryError as e:
+            return
+
+        except ValueError as e:
+            return
+
+        self._current_file = file
+        for c in j['cells']:
+            if c['cell_type'] == 'code':
+                if 'outputs' in c:
+                    for output in c['outputs']:
+                        if 'text' not in output:
+                            continue
+                        if not output['text'][0].startswith('-1. '):
+                            continue
+                        self.parselsq(output['text'])
+
+
+def main(files):
+    fit = Lsq()
+    for f in files:
+        fit.parse(f)
+    fit.report()
+    pass
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
+# end
