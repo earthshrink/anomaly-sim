@@ -3,6 +3,7 @@
 
 from itertools import pairwise
 
+from astropy import visualization
 from astropy import units as u
 from astropy.time import Time
 
@@ -10,6 +11,9 @@ from poliastro.util import norm
 
 from scipy import signal
 import numpy as np
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 def describe_orbit(orbit):
     """Summary of orbital elements."""
@@ -97,3 +101,56 @@ def find_swings(epochs, values):
 
     return Time(swing_epochs), swing_heights
 
+
+def plot_residual(times, residual, title, ylab):
+    """Plot trajectory residual from a least square fit."""
+
+    visualization.time_support()
+    _, ax = plt.subplots()
+    plt.xlabel(None)
+    plt.ylabel(ylab)
+    plt.grid(axis='x')
+    ax.plot(times, residual)
+
+    if times[-1] - times[0] > 5*u.day:
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
+
+    elif times[-1] - times[0] > 1*u.day:
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+
+    elif times[-1] - times[0] > 20*u.minute:
+        ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
+
+    if title:
+        plt.title(title)
+    plt.gcf().autofmt_xdate()
+
+
+def plot_swings(times, residual, title, ylab, minmax=False):
+    """Plot the swings in an oscillating residual."""
+
+    peak_epochs, peak_swings = find_swings(times, residual)
+    visualization.time_support()
+    _, ax = plt.subplots()
+    plt.xlabel(None)
+    plt.ylabel(ylab)
+    plt.grid(axis='x')
+    plt.scatter(peak_epochs, peak_swings)
+
+    if times[-1] - times[0] > 5*u.day:
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
+
+    elif times[-1] - times[0] > 1*u.day:
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+
+    elif times[-1] - times[0] > 20*u.minute:
+        ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
+
+    if title:
+        plt.title(title)
+    plt.gcf().autofmt_xdate()
+
+    if minmax:
+        print(min(peak_swings), max(peak_swings))
+    else:
+        print(peak_swings[-4:])
