@@ -1,9 +1,8 @@
 """Track epochs of several Earth flybys"""
 
 
+from enum import Enum
 from astropy.time import Time
-from enum import Enum 
-
 
 class Tracking(Enum):
 
@@ -26,7 +25,7 @@ class Tracking(Enum):
     ROSETTA05_PERIGEE           = Time("2005-03-04 22:09:14")       # JPL/Horizons min alt
 
 
-    """Rosetta later flybys: T Morley (pvt.)""" 
+    """Rosetta later flybys: T Morley (pvt.)"""
 
     ROSETTA07_PERIGEE           = Time("2007-11-13 20:57:00")
 
@@ -43,4 +42,3 @@ class Tracking(Enum):
 
     ROSETTA09_MASPALOMAS_START  = Time("2009-11-13 08:06:07")
     ROSETTA09_MASPALOMAS_END    = Time("2009-11-13 10:10:07")
-

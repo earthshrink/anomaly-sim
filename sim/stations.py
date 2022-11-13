@@ -5,7 +5,7 @@ Contains following antennas
 DSN 25 (Goldstone)
 DSN 34 (Canberra)
 
-SSN Altair 
+SSN Altair
 SSN Millstone
 
 DSN coordinates taken from DSN Handbook 301F (2011).
@@ -18,12 +18,10 @@ dss25, dss34 coords taken from Horizons query response to ensure closer comparis
 
 from astropy import units as u
 from astropy import constants as const
-from astropy.coordinates import ITRS, GCRS, CartesianRepresentation, EarthLocation
+from astropy.coordinates import EarthLocation
 from poliastro.bodies import Earth
 
 from poliastro.util import norm
-#from poliastro.czml.extract_czml import CZMLExtractor
-
 
 class Station:
     """Tracking station model, to compute range and range rate."""
@@ -38,9 +36,12 @@ class Station:
         return self._name
 
     def get_gcrs_posvel(self, epoch):
+        """Get GCRS position and velocity vectors of this station at given epoch."""
         return self._loc.get_gcrs_posvel(obstime=epoch)
 
     def range_and_rate(self, rv, epoch):
+        """Convert position, velocity state rv to station-relative range and range rate."""
+
         loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
         rvec = rv[0] - loc.xyz
         r = norm(rvec)
@@ -49,15 +50,20 @@ class Station:
         return r, rr
 
     def range_rate_accel(self, rv, epoch):
+        """Convert state rv to station-relative range, range rate and radial acceleration."""
+
         r, rr = self.range_and_rate(rv, epoch)
         return r, rr, -Earth.k/(r*r)
 
     def coord_range_and_rate(self, coords, epoch):
+        """Convert astropy coords to station-relative range and range rate."""
         r = coords.get_xyz(xyz_axis=1)[0]
         v = coords.differentials["s"].get_d_xyz(xyz_axis=1)[0]
         return self.range_and_rate((r, v), epoch)
 
     def rv_with_rangelag(self, rv, epoch):
+        """Add station-relative range lag to position, velocity vectors."""
+
         loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
         rvec = rv[0] - loc.xyz
         r = norm(rvec)
@@ -70,7 +76,9 @@ class Station:
         return rv[0] + dr*rvec/r, rv[1]
 
     def rv_with_ratelag(self, rv, epoch):
-        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
+        """Add station-relative range rate lag to position, velocity vectors."""
+
+        loc, _ = self._loc.get_gcrs_posvel(obstime=epoch)
         rvec = rv[0] - loc.xyz
         r = norm(rvec)
 
@@ -80,6 +88,7 @@ class Station:
         return rv[0], rv[1] + drr*rvec/r
 
     def add_to_czml(self, czml, color):
+        """Add station to CZML."""
         loc = self._loc
         czml.add_ground_station([loc.lon, loc.lat], self.name, color)
 
@@ -112,4 +121,3 @@ Stations = {
     "newnorcia": esNewNorcia,
     "NewNorcia": esNewNorcia,
 }
-

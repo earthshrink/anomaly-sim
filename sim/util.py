@@ -1,19 +1,19 @@
 #!/usr/bin/env python
+"""Utility functions used in the notebooks"""
+
+from itertools import pairwise
 
 from astropy import units as u
 from astropy.time import Time
 
 from poliastro.util import norm
-from poliastro.frames import Planes
-from poliastro.bodies import Earth
-from poliastro.ephem import Ephem
-from poliastro.twobody.orbit import Orbit
 
 from scipy import signal
-from itertools import pairwise
 import numpy as np
 
 def describe_orbit(orbit):
+    """Summary of orbital elements."""
+
     print()
     print("::ORBIT::")
     print("Plane:", orbit.plane)
@@ -25,7 +25,9 @@ def describe_orbit(orbit):
 
 
 def compare_orbits(a, b):
-    assert(a.plane == b.plane)
+    """Compare orbital elements."""
+
+    assert a.plane == b.plane
     print()
     print("Δ Inclination:", (b.inc - a.inc) << u.deg)
     print("Δ Eccentricity:", (b.ecc - a.ecc))
@@ -36,6 +38,8 @@ def compare_orbits(a, b):
 
 
 def describe_state(rv, station, epoch):
+    """Position, velocity coordinates in relation to a tracking station."""
+
     print()
     print(":AT:", epoch)
     r, rr = station.range_and_rate(rv, epoch)
@@ -43,15 +47,9 @@ def describe_state(rv, station, epoch):
     print("From", station.name, ": range ", r << u.km, ", range rate ", rr << (u.km/u.s))
 
 
-def describe_state_data(rv, station, epoch):
-    print()
-    print(":AT:", epoch)
-    x, v = station.get_gcrs_posvel(epoch)
-    print("station", x.xyz << u.km, v.xyz << (u.km/u.s))
-    print("object", rv[0] << u.km, rv[1] << (u.km/u.s))
-
-
 def describe_trajectory(ephem, station):
+    """Summary of a trajectory segment, and relation to a tracking station."""
+
     print()
     print("::TRAJECTORY::")
 
@@ -80,10 +78,12 @@ def describe_trajectory(ephem, station):
 
 
 def find_swings(epochs, values):
+    """Find swings in an oscillating time sequency."""
+
     peaks = signal.find_peaks(values)
     troughs = signal.find_peaks(np.multiply(-1, values))
 
-    swing = dict()
+    swing = {}
     for i, v in enumerate(peaks[0]):
         swing[v] = values[v]
     for i, v in enumerate(troughs[0]):
