@@ -52,8 +52,19 @@ class Station:
     def range_rate_accel(self, rv, epoch):
         """Convert state rv to station-relative range, range rate and radial acceleration."""
 
-        r, rr = self.range_and_rate(rv, epoch)
-        return r, rr, -Earth.k/(r*r)
+        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
+        rvec = rv[0] - loc.xyz
+        r = norm(rvec)
+        vvec = rv[1] - vel.xyz
+        rr = vvec.dot(rvec)/r
+
+        n_loc, n_vel = self._loc.get_gcrs_posvel(obstime=epoch+1*u.s)
+        rot_accel = ( (n_vel.xyz - vel.xyz).dot(rvec)/r )/(1*u.s)
+
+        g_accel = (-Earth.k/(rv[0]*rv[0])).dot(rvec)/r
+        #print(g_accel << (u.m/(u.s*u.s)), rot_accel << (u.m/(u.s*u.s)))
+
+        return r, rr, g_accel + rot_accel
 
     def coord_range_and_rate(self, coords, epoch):
         """Convert astropy coords to station-relative range and range rate."""
