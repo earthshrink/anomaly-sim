@@ -68,6 +68,10 @@ class OrbitFitter:
         self._resid = []
 
 
+    def param(self, name):
+        """Access parameters by name, to set constraints."""
+        return self._ref_params[name]
+
     @property
     def result(self):
         """LMfit result"""
