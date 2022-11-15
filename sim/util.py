@@ -102,6 +102,18 @@ def find_swings(epochs, values):
     return Time(swing_epochs), swing_heights
 
 
+def find_rates(times, residual):
+    """Compute rates in residual."""
+
+    rate = []
+    for i, e in enumerate(times[1:]):
+        dr = residual[i] - residual[i-1]
+        dt = (e - times[i-1]).to_value(u.s)
+        rate.append(dr/dt)
+
+    return rate
+
+
 def plot_residual(times, residual, title, ylab):
     """Plot trajectory residual from a least square fit."""
 
@@ -154,3 +166,5 @@ def plot_swings(times, residual, title, ylab, minmax=False):
         print(min(peak_swings), max(peak_swings))
     else:
         print(peak_swings[-4:])
+
+    return peak_epochs, peak_swings
