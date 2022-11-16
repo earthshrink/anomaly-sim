@@ -115,23 +115,7 @@ class OrbitFitter:
         return False
 
 
-    def _compute_trajectory(self, params, times):
-        vals = params.valuesdict()
-
-        self._orbit = Orbit.from_classical(attractor = Earth,
-                                     a=vals['a'] * u.m,
-                                     ecc=vals['ecc'] * u.one,
-                                     inc=vals['inc'] * u.rad,
-                                     raan=vals['raan'] * u.rad,
-                                     argp=vals['argp'] * u.rad,
-                                     nu=vals['nu'] * u.rad,
-                                     epoch = min(self._epoch, times[0]),
-                                     plane = Planes.EARTH_EQUATOR)
-        self._ephem = self._orbit.to_ephem(EpochsArray(times))
-
-
-    def _range_residuals(self, params, times, data, wts=None):
-        self._compute_trajectory(params, times)
+    def range_residual(self, times, data, wts=None):
         rres = []
         for i, e in enumerate(times):
             rv = self._ephem.rv(e)
@@ -146,23 +130,7 @@ class OrbitFitter:
                 rres.append((model_r - meas_r).to_value(u.m)*wt)
         return rres
 
-
-    def fit_range_data(self, times, data, weights=None, method='leastsq'):
-        """Method to fit orbital elements to range data"""
-
-        def res_func(pars, times, dats, wts):
-            return self._range_residuals(pars, times, dats, wts)
-
-        def tr_func(pars, iternum, resid, *_args, **_kws):
-            return self._iter_trace(iternum, pars, resid)
-
-        started = datetime.now()
-        self._result = minimize(res_func, self._ref_params,
-            args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func, method=method)
-        self._runtime = datetime.now() - started
-
-    def _doppler_residuals(self, params, times, data, wts=None):
-        self._compute_trajectory(params, times)
+    def doppler_residual(self, times, data, wts=None):
         rres = []
         for i, e in enumerate(times):
             rv = self._ephem.rv(e)
@@ -178,11 +146,51 @@ class OrbitFitter:
         return rres
 
 
+    def _compute_trajectory(self, params, times):
+        vals = params.valuesdict()
+
+        self._orbit = Orbit.from_classical(attractor = Earth,
+                                     a=vals['a'] * u.m,
+                                     ecc=vals['ecc'] * u.one,
+                                     inc=vals['inc'] * u.rad,
+                                     raan=vals['raan'] * u.rad,
+                                     argp=vals['argp'] * u.rad,
+                                     nu=vals['nu'] * u.rad,
+                                     epoch = min(self._epoch, times[0]),
+                                     plane = Planes.EARTH_EQUATOR)
+        self._ephem = self._orbit.to_ephem(EpochsArray(times))
+
+
+    def _range_residual(self, params, times, data, wts=None):
+        self._compute_trajectory(params, times)
+        return self.range_residual(times, data, wts)
+
+
+    def fit_range_data(self, times, data, weights=None, method='leastsq'):
+        """Method to fit orbital elements to range data"""
+
+        def res_func(pars, times, dats, wts):
+            return self._range_residual(pars, times, dats, wts)
+
+        def tr_func(pars, iternum, resid, *_args, **_kws):
+            return self._iter_trace(iternum, pars, resid)
+
+        started = datetime.now()
+        self._result = minimize(res_func, self._ref_params,
+            args=(times,), kws={'dats': data, 'wts': weights}, iter_cb=tr_func, method=method)
+        self._runtime = datetime.now() - started
+
+
+    def _doppler_residual(self, params, times, data, wts=None):
+        self._compute_trajectory(params, times)
+        return self.doppler_residual(times, data, wts)
+
+
     def fit_doppler_data(self, times, data, weights=None, method='leastsq'):
         """Method to fit orbital elements to doppler or range-rate data"""
 
         def res_func(pars, times, dats, wts):
-            return self._doppler_residuals(pars, times, dats, wts)
+            return self._doppler_residual(pars, times, dats, wts)
 
         def tr_func(pars, iternum, resid, *args, **kws):
             return self._iter_trace(iternum, pars, resid)
