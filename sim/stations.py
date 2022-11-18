@@ -39,7 +39,7 @@ class Station:
         """Get GCRS position and velocity vectors of this station at given epoch."""
         return self._loc.get_gcrs_posvel(obstime=epoch)
 
-    def range_and_rate(self, rv, epoch):
+    def range_and_rates(self, rv, epoch):
         """Convert position, velocity state rv to station-relative range and range rate."""
 
         loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
@@ -47,24 +47,25 @@ class Station:
         r = norm(rvec)
         vvec = rv[1] - vel.xyz
         rr = vvec.dot(rvec)/r
+        return r, rr, vel.xyz.dot(rvec)/r
+
+    def range_and_rate(self, rv, epoch):
+        """Convert position, velocity state rv to station-relative range and range rate."""
+        r, rr, _ = self.range_and_rates(rv, epoch)
         return r, rr
 
-    def range_rate_accel(self, rv, epoch):
-        """Convert state rv to station-relative range, range rate and radial acceleration."""
+    def range_rate_accel(self, ephem, epoch):
+        """Convert state rv to station-relative range, range rate and radial accelerations."""
 
-        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
-        rvec = rv[0] - loc.xyz
-        r = norm(rvec)
-        vvec = rv[1] - vel.xyz
-        rr = vvec.dot(rvec)/r
+        r, rr, v_station = self.range_and_rates(ephem.rv(epoch), epoch)
 
-        n_loc, n_vel = self._loc.get_gcrs_posvel(obstime=epoch+1*u.s)
-        rot_accel = ( (n_vel.xyz - vel.xyz).dot(rvec)/r )/(1*u.s)
+        e1s = epoch + 1*u.s
+        _, n_rr, nv_station = self.range_and_rates(ephem.rv(e1s), e1s)
 
-        g_accel = (-Earth.k/(rv[0]*rv[0])).dot(rvec)/r
-        #print(g_accel << (u.m/(u.s*u.s)), rot_accel << (u.m/(u.s*u.s)))
+        net_accel = (n_rr - rr)/(1*u.s)
+        station_accel = (nv_station - v_station)/(1*u.s)
 
-        return r, rr, g_accel + rot_accel
+        return r, rr, net_accel, station_accel
 
     def coord_range_and_rate(self, coords, epoch):
         """Convert astropy coords to station-relative range and range rate."""
