@@ -8,12 +8,33 @@ from astropy import units as u
 from astropy.time import Time
 
 from poliastro.util import norm
+from poliastro.frames import Planes
+from poliastro.ephem import Ephem
+from poliastro.bodies import Earth
+
+from poliastro.twobody.orbit import Orbit
 
 from scipy import signal
 import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+
+
+def orbit_from_horizons(spacecraft, epoch):
+    """Compute orbital elements for flyby with initial coordinates from JPL Horizons."""
+
+    ephem = Ephem.from_horizons(spacecraft, epoch, attractor=Earth, plane=Planes.EARTH_EQUATOR)
+    rv = ephem.rv(epoch)
+    return Orbit.from_vectors(Earth, rv[0], rv[1], epoch)
+
+
+def make_epochs(start, end, interval):
+    """Compile epochs array for simulation."""
+
+    offsets = np.arange(0, (end-start)/(1*u.s), interval.to_value(u.s))
+    return start + (offsets << u.s)
+
 
 def describe_orbit(orbit):
     """Summary of orbital elements."""
