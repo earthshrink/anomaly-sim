@@ -16,10 +16,10 @@ checkfile () {
 			}
 		pn=$n
 	done
-	echo "$file: $step steps"
+	#echo "$file: $step steps"
 	}
 
-for f in */*.ipynb
+for f in $(git ls-files */*.ipynb)
 do
 	sed -n -e 's/,//' -e 's/.*execution_count": //p' $f | checkfile $f
 done

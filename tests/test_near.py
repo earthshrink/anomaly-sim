@@ -5,13 +5,17 @@ from testbook import testbook
 def test_near_sim_postencounter_doppler(tb):
 	tb.execute()
 
-@testbook('../near/near_sim_postencounter_constlag.ipynb', execute=True, timeout=600)
+@testbook('../near/near_sim_postencounter_range.ipynb', execute=True, timeout=600)
 def test_near_sim_postencounter_doppler(tb):
 	tb.execute()
 
-@testbook('../near/near_sim_postencounter_scaledlag.ipynb', execute=True, timeout=600)
+@testbook('../near/near_sim_postencounter.ipynb', execute=True, timeout=600)
 def test_near_sim_postencounter_doppler(tb):
 	tb.execute()
+
+@testbook('../near/near_deltav.ipynb', execute=True)
+def test_gapcheck(tb):
+    tb.execute()
 
 @testbook('../near/near_gapcheck.ipynb', execute=True)
 def test_gapcheck(tb):
@@ -42,6 +46,10 @@ def test_near_sim_ssn_revfit_millstone(tb):
 	tb.execute()
 
 @testbook('../near/near_sim_ssn_revfit_range.ipynb', execute=True)
+def test_near_sim_ssn_revfit_range(tb):
+	tb.execute()
+
+@testbook('../near/near_sim_ssn_revfit_range_byrate.ipynb', execute=True)
 def test_near_sim_ssn_revfit_range(tb):
 	tb.execute()
 
