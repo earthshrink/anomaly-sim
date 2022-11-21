@@ -126,8 +126,11 @@ class OrbitFitter:
                 wt = wts[i]
             for si, sv in enumerate(self._stations):
                 meas_r = datum[si]
-                model_r, _ = sv.range_and_rate(rv, e)
-                rres.append((model_r - meas_r).to_value(u.m)*wt)
+                if np.isnan(meas_r):
+                    rres.append(0)
+                else:
+                    model_r, _ = sv.range_and_rate(rv, e)
+                    rres.append((model_r - meas_r).to_value(u.m)*wt)
         return rres
 
     def doppler_residual(self, times, data, wts=None):
@@ -141,8 +144,11 @@ class OrbitFitter:
                 wt = wts[i]
             for si, sv in enumerate(self._stations):
                 meas_rr = datum[si]
-                _, model_rr = sv.range_and_rate(rv, e)
-                rres.append((model_rr - meas_rr).to_value(u.m/u.s)*wt)
+                if np.isnan(meas_rr):
+                    rres.append(0)
+                else:
+                    _, model_rr = sv.range_and_rate(rv, e)
+                    rres.append((model_rr - meas_rr).to_value(u.m/u.s)*wt)
         return rres
 
 
