@@ -90,6 +90,21 @@ whereas range rate would mean differenced range data, obtained as round trip tim
 The computed range rate is simply referred to as the (simulated) Doppler here,
 with no attempt to actually simulate the corresponding shifts in carrier frequency.
 
+## Known limitations
+
+- As stated, the code performs least-square fits of orbital elements rather than solve dynamical equations as in
+  NASA/ESA OD. This approach would be ordinarily meaningful only within a single-attractor sphere of influence (SOI),
+  and thus for satellite rather than deep space missions.
+
+  NEAR's post-encounter residuals extended to 3000 Mm, 3x Earth's SOI. As other forces, including the lunar and solar
+  gravitational influences as well as the solar wind, etc., were already accounted for in the NASA/ESA OD, the residuals
+  represent a fraction of the tracking data that could not also be attributed to such forces in any case.
+
+- Light time corrections are omitted in obtaining the ground station coordinates for computing range, range rate and
+  radial acceleration. Even the 3x SOI distance considered for NEAR is only about 10 s, during which the ground
+  station's relative position and velocity change little.
+
+
 ## Results
 
 The main result obtained is that
