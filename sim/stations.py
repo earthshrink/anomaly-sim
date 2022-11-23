@@ -18,22 +18,41 @@ dss25, dss34 coords taken from Horizons query response to ensure closer comparis
 
 from astropy import units as u
 from astropy import constants as const
-from astropy.coordinates import EarthLocation
-from poliastro.bodies import Earth
+from astropy.time import Time
+from astropy.coordinates import EarthLocation, CartesianRepresentation, CartesianDifferential
 
 from poliastro.util import norm
+from poliastro.bodies import Earth
+
+import json
 
 class Station:
     """Tracking station model, to compute range and range rate."""
 
-    def __init__(self, name, lon, lat, height):
+    def __init__(self, name, lon, lat, height, site_code=None):
         self._loc = EarthLocation.from_geodetic(lon, lat, height)
         self._name = name
+        self._site_code = site_code
 
     @property
     def name(self):
         """Name attached to this location for reference."""
         return self._name
+
+    @property
+    def horizons_code(self):
+        """
+        Site code or location encoding for Horizons query.
+        The location encoding is currently blocked by astroquery for topographic query.
+        """
+        if self._site_code:
+            return f'{self._site_code}@399'
+        code = {
+            'lon': self._loc.lon.to_value(u.deg),
+            'lat': self._loc.lat.to_value(u.deg),
+            'elevation': self._loc.height.to_value(u.km)
+        }
+        return json.dumps(code)
 
     def get_gcrs_posvel(self, epoch):
         """Get GCRS position and velocity vectors of this station at given epoch."""
@@ -104,8 +123,9 @@ class Station:
         loc = self._loc
         czml.add_ground_station([loc.lon, loc.lat], self.name, color)
 
-dss25 = Station("Goldstone-25", 243.124600*u.deg, 35.3375595*u.deg, 0.9623240*u.m)
-dss34 = Station("Canberra-34", 148.981964*u.deg, -35.398479*u.deg, 0.6920208*u.m)
+
+dss25 = Station("Goldstone-25", 243.124600*u.deg, 35.3375595*u.deg, 0.9623240*u.m, site_code=257)
+dss34 = Station("Canberra-34", 148.981964*u.deg, -35.398479*u.deg, 0.6920208*u.m, site_code=-34)
 
 ssrAltair = Station("Altair", 167.479328*u.deg, 9.395472*u.deg, 66*u.m)
 ssrMillstone = Station("Millstone", -71.490967*u.deg, 42.617442*u.deg, 127*u.m)

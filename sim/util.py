@@ -13,6 +13,7 @@ from poliastro.ephem import Ephem
 from poliastro.bodies import Earth
 
 from poliastro.twobody.orbit import Orbit
+from astroquery.jplhorizons import Horizons
 
 from scipy import signal
 import numpy as np
@@ -34,6 +35,21 @@ def make_epochs(start, end, interval):
 
     offsets = np.arange(0, (end-start)/(1*u.s), interval.to_value(u.s))
     return start + (offsets << u.s)
+
+
+def horizons_range_rate_accel(spacecraft, station, epoch):
+    """Topocentric range, range rate and radial acceleration from JPL Horizons."""
+
+    loc = station.horizons_code
+    epochs = make_epochs(epoch, epoch+1*u.s, 0.5*u.s)
+
+    query = Horizons(id=spacecraft, location=loc, epochs=epochs.jd, id_type=None)
+    obj = query.vectors(refplane="earth")
+    r = obj["range"].quantity[0]
+    rr = obj["range_rate"].quantity[0]
+    n_rr = obj["range_rate"].quantity[1]
+
+    return r, rr, (n_rr - rr)/(0.5*u.s)
 
 
 def describe_orbit(orbit):
