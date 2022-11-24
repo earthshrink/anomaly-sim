@@ -25,6 +25,7 @@ from poliastro.util import norm
 from poliastro.bodies import Earth
 
 import json
+import math
 
 class Station:
     """Tracking station model, to compute range and range rate."""
@@ -59,7 +60,7 @@ class Station:
         return self._loc.get_gcrs_posvel(obstime=epoch)
 
     def range_and_rates(self, rv, epoch):
-        """Convert position, velocity state rv to station-relative range and range rate."""
+        """Convert position, velocity state rv to station-relative range, range rate and station component."""
 
         loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
         rvec = rv[0] - loc.xyz
@@ -85,6 +86,43 @@ class Station:
         station_accel = (nv_station - v_station)/(1*u.s)
 
         return r, rr, net_accel, station_accel
+
+    def range_rate_elevation(self, rv, epoch):
+        """Convert position, velocity state rv to station-relative range, range rate and elevation."""
+
+        loc, vel = self._loc.get_gcrs_posvel(obstime=epoch)
+
+        # angle at Earth's centre
+        R = norm(loc.xyz)
+        r0 = norm(rv[0])
+        arg = rv[0].dot(loc.xyz)/(R*r0)
+        theta = math.acos(arg.to_value(u.one))
+
+        # angle at spacecraft
+        rvec = rv[0] - loc.xyz
+        r = norm(rvec)
+        arg = rv[0].dot(rvec)/(r0*r)
+        alpha = math.acos(arg.to_value(u.one))
+
+        # angle between Earth's centre and spacecraft, minus horizon
+        elev = math.pi/2 - (theta + alpha)
+
+        vvec = rv[1] - vel.xyz
+        rr = vvec.dot(rvec)/r
+        return r, rr, vel.xyz.dot(rvec)/r, elev*u.rad
+
+    def range_rate_accel_elev(self, ephem, epoch):
+        """Convert state rv to station-relative range, range rate, radial accelerations and elevation."""
+
+        r, rr, v_station, elev = self.range_rate_elevation(ephem.rv(epoch), epoch)
+
+        e1s = epoch + 1*u.s
+        _, n_rr, nv_station = self.range_and_rates(ephem.rv(e1s), e1s)
+
+        net_accel = (n_rr - rr)/(1*u.s)
+        station_accel = (nv_station - v_station)/(1*u.s)
+
+        return r, rr, net_accel, station_accel, elev
 
     def coord_range_and_rate(self, coords, epoch):
         """Convert astropy coords to station-relative range and range rate."""
