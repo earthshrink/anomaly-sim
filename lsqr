@@ -3,50 +3,96 @@
 
 import numpy as np
 
+import pandas as pd
+
 import json
 import sys
 import re
+
+
+class Fit:
+    """A fit."""
+
+    def __init__(self, file):
+        self._file = file
+        self._data = None
+        self._context = None
+        self._params = {
+            'a': None,
+            'ecc': None,
+            'inc': None,
+            'nu': None,
+            'raan': None,
+            'argp': None,
+        }
+        self._unchanged = {
+            'a': False,
+            'ecc': False,
+            'inc': False,
+            'nu': False,
+            'raan': False,
+            'argp': False,
+        }
+
+    def __str__(self):
+        return "\t".join([ str(x) for x in (pd.json_normalize(self.__dict__, sep='_').to_dict(orient='records')[0]).values() ])
+
+    def names(self):
+        return "\t".join([ str(x) for x in (pd.json_normalize(self.__dict__, sep='_').to_dict(orient='records')[0]).keys() ])
 
 class Lsq:
     """Purveyor of text comments"""
 
     def __init__(self):
         self._iter_re = re.compile('(\-?\d+)\. (\-?\d+\.\d+) (\{[^}]+\})')
+        self._init_re = re.compile('^\s*(\w+):\s*at initial value')
+        self._var_re = re.compile('^\s*(\w+):\s*(-?\d+\.\d+) \(init = (-?\d+\.?\d*)\)\s*$')
+        #self._fit_re = re.compile('.*(\w+fit\w+)\(.*, (\w+data\w+), \"([^"]*)\"\)')
+        self._fit_re = re.compile('(\w*fit\w*)\(')
+        self._fit_data_re = re.compile('(\w*data\w*),')
+        self._fit_context_re = re.compile('"([^"]+)"')
+
         self._current_file = None
-        self._norms = {}
-        self._params = {}
-        self._pkeys = ['a', 'ecc', 'inc', 'nu', 'raan', 'argp']
-
-        self._unity = lambda x: x
-        self._rad2deg = lambda x: np.rad2deg(x)
-        self._pconv = [ self._unity, self._unity, self._rad2deg, self._rad2deg, self._rad2deg, self._rad2deg ]
-
+        self._fits = []
 
     def report(self):
-        print('{}\t'.format('notebook'),
-            '\t'.join(['{}\tΔ{}'.format(k, k) for i, k in enumerate(self._pkeys)]))
-        for f in self._norms.keys():
-            p = self._params[f]
-            print('{}\t'.format(f),
-                '\t'.join(['{}\t{}'.format(self._pconv[i](p[0][k]), self._pconv[i](p[-1][k] - p[0][k]))
-                    for i, k in enumerate(self._pkeys)]))
+        print(self._fits[0].names())
+        for f in self._fits:
+            print(f)
 
+    def parse_fit(self, lines):
 
-    def store(self, niter, rnorm, params):
-        if int(niter) < 0:
-            return
-        if self._current_file not in self._norms:
-            self._norms[self._current_file] = []
-        if self._current_file not in self._params:
-            self._params[self._current_file] = []
-        self._norms[self._current_file].append(rnorm)
-        self._params[self._current_file].append(params)
-
-    def parselsq(self, lines):
+        fit = None
         for l in lines:
-            m = self._iter_re.match(l)
-            if m:
-                self.store(m.group(1), m.group(2), eval(m.group(3)))
+            if l.startswith('[[Fit Statistics'):
+                fit = Fit(self._current_file)
+                self._fits.append(fit)
+                continue
+
+            m = self._init_re.match(l)
+            if m and fit:
+                fit._unchanged[m.group(1)] = True
+                continue
+
+            m = self._var_re.match(l)
+            if m and fit:
+                fit._params[m.group(1)] = float(m.group(2))
+                continue
+
+        return fit
+
+    def parse_context(self, fit, lines):
+        for l in lines:
+            m = self._fit_re.search(l)
+            if m and fit:
+
+                m1 = self._fit_data_re.search(l)
+                if m1:
+                    fit._data = m1.group(1)
+
+                m2 = self._fit_context_re.search(l)
+                if m2:
+                    fit._context = m2.group(1)
 
     def parse(self, file):
         try:
@@ -60,15 +106,16 @@ class Lsq:
             return
 
         self._current_file = file
+        fit = None
         for c in j['cells']:
             if c['cell_type'] == 'code':
                 if 'outputs' in c:
                     for output in c['outputs']:
                         if 'text' not in output:
                             continue
-                        if not output['text'][0].startswith('-1. '):
-                            continue
-                        self.parselsq(output['text'])
+                        fit = self.parse_fit(output['text'])
+                if 'source' in c:
+                    self.parse_context(fit, c['source'])
 
 
 def main(files):
