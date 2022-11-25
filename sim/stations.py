@@ -2,18 +2,14 @@
 
 Contains following antennas
 
+DSN 24 (Goldstone)
 DSN 25 (Goldstone)
 DSN 34 (Canberra)
 
 SSN Altair
 SSN Millstone
 
-DSN coordinates taken from DSN Handbook 301F (2011).
-
-The DSN Handbook lists cartesian (Table 2), geodetic (Table 5) and geocentric
-coordinates (Table 6), the geodetic in deg, min, sec form.
-
-dss25, dss34 coords taken from Horizons query response to ensure closer comparison
+DSN coordinates directly from JPL Horizons web interface.
 """
 
 from astropy import units as u
@@ -162,8 +158,9 @@ class Station:
         czml.add_ground_station([loc.lon, loc.lat], self.name, color)
 
 
-dss25 = Station("Goldstone-25", 243.124600*u.deg, 35.3375595*u.deg, 0.9623240*u.m, site_code=257)
-dss34 = Station("Canberra-34", 148.981964*u.deg, -35.398479*u.deg, 0.6920208*u.m, site_code=-34)
+dss24 = Station("Goldstone-24", 243.125206*u.deg, 35.3398928*u.deg, 0.9515116*u.km, site_code=-24)
+dss25 = Station("Goldstone-25", 243.124637*u.deg, 35.3376120*u.deg, 0.9596342*u.km, site_code=257)
+dss34 = Station("Canberra-34", 148.981964*u.deg, -35.398479*u.deg, 0.6920208*u.km, site_code=-34)
 
 ssrAltair = Station("Altair", 167.479328*u.deg, 9.395472*u.deg, 66*u.m)
 ssrMillstone = Station("Millstone", -71.490967*u.deg, 42.617442*u.deg, 127*u.m)
