@@ -11,6 +11,10 @@ checkfile () {
 		[[ $n == $step ]] || {
 			# allow repeats- json!
 			[ $n == $pn ] && continue
+			[ $nameonly ] && {
+				echo $file
+				break
+				}
 			echo $file expected $step got $n
 			break
 			}
@@ -19,7 +23,32 @@ checkfile () {
 	#echo "$file: $step steps"
 	}
 
-for f in $(git ls-files */*.ipynb)
+
+while getopts af:n opt
+do
+	case $opt in
+	'a')
+		all=:
+		;;
+	'f')
+		Files="$OPTARG"
+		;;
+	'n')
+		nameonly=:
+		;;
+	esac
+done
+
+[ "$Files" ] || {
+	if [ $all ]
+	then
+		Files=$(find near rosetta -name '*.ipynb' | fgrep -v '/.')
+	else
+		Files=$(git ls-files \*.ipynb)
+	fi
+	}
+
+for f in $Files
 do
 	sed -n -e 's/,//' -e 's/.*execution_count": //p' $f | checkfile $f
 done
