@@ -8,7 +8,7 @@ class Tracking(Enum):
 
     """NEAR: from Antreasian & Guinn, 1998"""
 
-    NEAR_PERIGEE                = Time("1998-01-23 07:22:55")
+    NEAR_PERIGEE                = Time("1998-01-23 07:22:57")       # AG: 55.6, JPL/H: 57
 
     NEAR_SSN_START              = Time("1998-01-23 06:12:00", scale="tdb")
     NEAR_SSN_END                = Time("1998-01-23 06:54:00", scale="tdb")
