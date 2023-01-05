@@ -155,7 +155,7 @@ class Station:
     def add_to_czml(self, czml, color):
         """Add station to CZML."""
         loc = self._loc
-        czml.add_ground_station([loc.lon, loc.lat], self.name, color)
+        czml.add_ground_station([loc.lon, loc.lat], self.name, color, label_text=self.name, label_font="10pt Verdana")
 
 
 dss24 = Station("Goldstone-24", 243.125206*u.deg, 35.3398928*u.deg, 0.9515116*u.km, site_code=-24)
