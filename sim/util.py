@@ -191,6 +191,7 @@ def plot_residual(times, residual, title, ylab, ylim=None):
         plt.legend(loc="best")
 
     plt.gcf().autofmt_xdate()
+    return plt
 
 
 def plot_swings(times, residual, title, ylab, minmax=False):
