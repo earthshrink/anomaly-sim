@@ -151,48 +151,48 @@ def find_rates(times, residual):
     return rate
 
 
-def plot_residual(times, residual, title, ylab, ylim=None):
+def plot_residual(times, residual, title, ylab, ylim=None, ax=None):
     """Plot trajectory residual from a least square fit."""
 
     visualization.time_support()
-    _, ax = plt.subplots()
-    plt.xlabel(None)
-    plt.ylabel(ylab)
-    plt.grid(axis='x')
+    newplot = ax is None
 
-    if ylim:
-        ax.set_ylim(ylim)
+    if newplot:
+        _, ax = plt.subplots()
+        plt.xlabel(None)
+        plt.ylabel(ylab)
+        plt.grid(axis='x')
+        plt.gcf().autofmt_xdate()
 
-    if type(residual) is dict:
+        if ylim:
+            ax.set_ylim(ylim)
+
+        if title:
+            plt.title(title)
+
+        if times[-1] - times[0] > 10*u.day:
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
+
+        elif times[-1] - times[0] > 1*u.day:
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+
+        elif times[-1] - times[0] > 3*u.hour:
+            ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
+
+        elif times[-1] - times[0] > 20*u.minute:
+            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
+
+        else:
+            ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
+
+    if isinstance(residual, dict):
         for v in residual:
-            ax.plot(times, residual[v], label = f'{v.name}')
-    else:
-        ax.plot(times, residual)
-
-    if times[-1] - times[0] > 10*u.day:
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
-
-    elif times[-1] - times[0] > 1*u.day:
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
-
-    elif times[-1] - times[0] > 3*u.hour:
-        ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
-
-    elif times[-1] - times[0] > 20*u.minute:
-        ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
-
-    else:
-        ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
-
-    if title:
-        plt.title(title)
-
-    if type(residual) is dict:
+            ax.plot(times, [v * 1e3 for v in residual[v]], label = f'{v.name}')
         plt.legend(loc="best")
+    else:
+        ax.plot(times, [v * 1e3 for v in residual])
 
-    plt.gcf().autofmt_xdate()
     return plt
-
 
 def plot_swings(times, residual, title, ylab, minmax=False):
     """Plot the swings in an oscillating residual."""
